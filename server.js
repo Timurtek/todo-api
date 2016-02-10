@@ -1,5 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
+var _ = require('underscore');
+
 var app = express();
 var PORT = process.env.PORT || 3000;
 var todos = [];
@@ -23,32 +25,34 @@ app.get('/todos/:id',function(req,res){
   //req parameters are always string
   //you have to turn them into number you want to use it as a number
   var todoId = parseInt(req.params.id,10);
-  var matchedTodo;
-  //loop through todos array
-  todos.forEach(function(todo){
-    if(todoId === todo.id){
-      matchedTodo = todo;
-    }
-  });
-    if(matchedTodo){
-      res.json(matchedTodo);
-    }else{
-      res.status(404).send('Not Found');
-    }
+  var matchedTodo = _.findWhere(todos,{id:todoId});
+
+  if(matchedTodo){
+    res.json(matchedTodo);
+  }else{
+    res.status(404).send('Not Found');
+  }
 });
 // POST new todo item
 app.post('/todos', function (req, res) {
-  var body = req.body;
-  body.id = todoNextId++;
-  //add id field
-  todos.push(body);
+  var body = _.pick(req.body,'description','completed');
 
-  //push body into array
-  console.log(todos);
-  console.log('_____________');
-  console.log(body);
+  if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
+    return res.status(400).send('Something went wrong');
+  }
 
-  res.json(body)
+  //set body.description to be trimmed.
+    body.description = body.description.trim();
+    body.id = todoNextId++;
+    //add id field
+    todos.push(body);
+
+    //push body into array
+    console.log(todos);
+    console.log('_____________');
+    console.log(body);
+
+    res.json(body);
 });
 
 //GET /profiles
@@ -59,12 +63,7 @@ app.get('/profiles',function(req,res){
 //GET /profiles/:id
 app.get('/profiles/:id',function(req,res){
   var profileId= parseInt(req.params.id,10);
-  var profileMatched;
-  profiles.forEach(function(profile){
-    if (profileId === profile.id) {
-      profileMatched = profile;
-    }
-  });
+  var profileMatched = _.findWhere(profiles,{id:profileId});
   if (profileMatched) {
     res.json(profileMatched);
   }else{
@@ -74,8 +73,13 @@ app.get('/profiles/:id',function(req,res){
 
 //POST /profiles/:id
 app.post('/profiles/',function(req,res){
-  var body = req.body;
+  var body = _.pick(req.body,'username','account_type');
+  if (!_.isString(body.username) ) {
+      return res.status(404).send('User Name has to be a string');
+  }
   body.id = profileNextId++;
+  body.account_type = body.account_type.trim();
+  body.username = body.username.trim();
   profiles.push(body);
   console.log(body);
   res.json(body);
