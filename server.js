@@ -16,9 +16,16 @@ app.get('/',function(req,res){
 
 });
 
-//GET /todos
+//GET /todos?completed=true
 app.get('/todos',function(req,res){
-  res.json(todos);
+  var queryParams = req.query;
+  var filteredTodos = todos;
+  if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'true'){
+    filteredTodos = _.where(filteredTodos,{completed:true});
+  }else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
+    filteredTodos = _.where(filteredTodos,{completed:false});
+  }
+  res.json(filteredTodos);
 });
 
 //GET /todos/:id
@@ -55,7 +62,7 @@ app.post('/todos', function (req, res) {
 
   if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
     return res.status(400).send('Something went wrong');
-}
+  }
 
   //set body.description to be trimmed.
     body.description = body.description.trim();
@@ -79,7 +86,7 @@ app.put('/todos/:id',function(req,res){
   var validAttr = {};
 
   if (!matchedTodo) {
-    return res.status(404).send();
+    return res.status(404).send('Coundt find the todo item');
   }
   if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
     validAttr.completed = body.completed;
@@ -94,37 +101,6 @@ app.put('/todos/:id',function(req,res){
   _.extend(matchedTodo, validAttr);
   res.json(matchedTodo);
 });
-
-//GET /profiles
-app.get('/profiles',function(req,res){
-  res.json(profiles);
-});
-
-//GET /profiles/:id
-app.get('/profiles/:id',function(req,res){
-  var profileId= parseInt(req.params.id,10);
-  var profileMatched = _.findWhere(profiles,{id:profileId});
-  if (profileMatched) {
-    res.json(profileMatched);
-  }else{
-    res.status(404).send('Couldnt find the profile');
-  }
-});
-
-//POST /profiles/:id
-app.post('/profiles/',function(req,res){
-  var body = _.pick(req.body,'username','account_type');
-  if (!_.isString(body.username) ) {
-      return res.status(404).send('User Name has to be a string');
-  }
-  body.id = profileNextId++;
-  body.account_type = body.account_type.trim();
-  body.username = body.username.trim();
-  profiles.push(body);
-  console.log(body);
-  res.json(body);
-});
-
 
 
 //listens for server
