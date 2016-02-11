@@ -71,6 +71,30 @@ app.post('/todos', function (req, res) {
     res.json(body);
 });
 
+//PUT /todos/:id
+app.put('/todos/:id',function(req,res){
+  var todoId = parseInt(req.params.id,10);
+  var matchedTodo = _.findWhere(todos,{id:todoId});
+  var body = _.pick(req.body,'description','completed');
+  var validAttr = {};
+
+  if (!matchedTodo) {
+    return res.status(404).send();
+  }
+  if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
+    validAttr.completed = body.completed;
+  }else if(body.hasOwnProperty('completed')){
+      return res.status(404).send();
+  }
+  if (body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
+    validAttr.description = body.description;
+  }else if(body.hasOwnProperty('description')){
+      return res.status(404).send();
+  }
+  _.extend(matchedTodo, validAttr);
+  res.json(matchedTodo);
+});
+
 //GET /profiles
 app.get('/profiles',function(req,res){
   res.json(profiles);
@@ -100,6 +124,7 @@ app.post('/profiles/',function(req,res){
   console.log(body);
   res.json(body);
 });
+
 
 
 //listens for server
